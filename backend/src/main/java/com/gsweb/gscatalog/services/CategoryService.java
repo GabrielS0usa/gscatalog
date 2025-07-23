@@ -11,6 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.gsweb.gscatalog.dto.CategoryDTO;
 import com.gsweb.gscatalog.entities.Category;
 import com.gsweb.gscatalog.repositories.CategoryRepository;
+import com.gsweb.gscatalog.services.exceptions.ResouceNotFoundException;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class CategoryService {
@@ -28,14 +31,29 @@ public class CategoryService {
 	@Transactional(readOnly = true)
 	public CategoryDTO findById(Long id) {
 		Optional<Category> obj = repository.findById(id);
-		Category entity = obj.orElseThrow(() -> new com.gsweb.gscatalog.services.exceptions.EntityNotFoundException("Entity not found"));
+		Category entity = obj.orElseThrow(() -> new ResouceNotFoundException("Entity not found"));
 		return new CategoryDTO(entity);
 	}
-
+	
+	@Transactional
 	public CategoryDTO insert(CategoryDTO dto) {
 		Category entity = new Category();
 		entity.setName(dto.getName());
 		entity = repository.save(entity);
 		return new CategoryDTO(entity);
+	}
+	
+	
+	@Transactional
+	public CategoryDTO update(Long id, CategoryDTO dto) {
+		try {
+			Category entity = repository.getReferenceById(id);
+			entity.setName(dto.getName());
+			entity = repository.save(entity);
+			return new CategoryDTO(entity);
+		}
+		catch (EntityNotFoundException e) {
+			throw new ResouceNotFoundException("Id not found " + id);
+		}
 	}
 }
